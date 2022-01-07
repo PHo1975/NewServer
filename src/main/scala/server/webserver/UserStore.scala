@@ -109,37 +109,25 @@ object UserStore extends IdentityManager {
     }
 
   override def verify(account: Account): Account =
-    //println("Verify "+account)
     if userList.exists {
       _.name == account.getPrincipal.getName
     } then account else null
 
   override def verify(id: String, credential: Credential): Account =
-    //println("verify "+id+" "+credential)
     userList.find(_.name==id) match {
       case Some(user)=>
-        //println("User:"+user)
         credential match {
           case pc:PasswordCredential=>
-            println("Password:"+new String(pc.getPassword))
             if(user.password==new String(pc.getPassword)) user else null
           case d:DigestCredential=>
-            /*println(d.getAlgorithm.getAlgorithm + " aname:" + d.getAlgorithm.name() + " atoken:" + d.getAlgorithm.getToken +
-              " realm:" + d.getRealm + " ");*/
             val digest=MessageDigest.getInstance(d.getAlgorithm.name())
-            //val digest = d.getAlgorithm.getMessageDigest
-            digest.reset()
             val dstring = user.name + ":" + d.getRealm + ":" + user.password
             digest.update(dstring.getBytes(StandardCharsets.UTF_8))
             val ha1 = HexConverter.convertToHexBytes( digest.digest())
-            //println("Dstring:" + dstring + " ha1:" + ha1.mkString("|"))
-            if (d.verifyHA1(ha1))
-              //println("correct")
-              user
+            if (d.verifyHA1(ha1)) user
             else null
-
-        case o => println("other Credential "+o+" "+o.getClass);null
-      }
+          case o => println("other Credential "+o+" "+o.getClass);null
+        }
       case None => println("User not found "+id);null
     }
 
